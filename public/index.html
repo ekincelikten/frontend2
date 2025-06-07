@@ -2,26 +2,34 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hortlaklı Köy</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body>
-  <div id="app">
-    <h1>Hortlaklı Köy</h1>
-    <div id="login">
-      <input type="text" id="nickname" placeholder="Nickinizi girin" />
-      <button onclick="continueToLobbyOptions()">Devam</button>
-    </div>
-    <div id="lobbyOptions" style="display:none;">
-      <input type="text" id="lobbyName" placeholder="Lobi adı" />
-      <button onclick="createLobby()">Lobi Oluştur</button>
-      <button onclick="showLobbyList()">Lobiler</button>
-    </div>
-    <div id="lobbyList" style="display:none;"></div>
-    <div id="gameArea" style="display:none;"></div>
+  <h1>Hortlaklı Köy</h1>
+  <div id="phaseDisplay" style="display: none; text-align: center;">
+    <h2 id="phaseTitle"></h2>
+    <p id="phaseTimer"></p>
   </div>
-  <script src="script.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    socket.on("phaseChange", ({ phase }) => {
+      const display = document.getElementById("phaseDisplay");
+      const title = document.getElementById("phaseTitle");
+      const timer = document.getElementById("phaseTimer");
+      let seconds = phase === "day" ? 15 : 10;
+      title.textContent = phase === "day" ? "GÜNDÜZ" : "GECE";
+      display.style.display = "block";
+      timer.textContent = seconds + " saniye";
+      const interval = setInterval(() => {
+        seconds--;
+        timer.textContent = seconds + " saniye";
+        if (seconds <= 0) clearInterval(interval);
+      }, 1000);
+    });
+  </script>
 </body>
 </html>
