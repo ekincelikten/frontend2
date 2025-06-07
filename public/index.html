@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hortlaklı Köy</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <h1>Hortlaklı Köy</h1>
+    <div id="login">
+      <input type="text" id="nickname" placeholder="Nickinizi girin" />
+      <button onclick="continueToLobbyOptions()">Devam</button>
+    </div>
+    <div id="lobbyOptions" style="display:none;">
+      <input type="text" id="lobbyName" placeholder="Lobi adı" />
+      <button onclick="createLobby()">Lobi Oluştur</button>
+      <button onclick="showLobbyList()">Lobiler</button>
+    </div>
+    <div id="lobbyList" style="display:none;"></div>
+    <div id="gameArea" style="display:none;"></div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
