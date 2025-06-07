@@ -49,9 +49,9 @@ socket.on("lobbyJoined", ({ lobby, players }) => {
   let html = "<h2>Lobi: " + lobby.name + "</h2><div style='display:flex; flex-wrap:wrap; gap:10px'>";
   players.forEach(p => {
     if (p.empty) {
-      html += "<div style='text-align:center'><img src='Empty.png' width='60'><p>Boş</p></div>";
+      html += "<div style='text-align:center'><img src='avatars/Empty.png' width='60'><p>Boş</p></div>";
     } else {
-      html += "<div style='text-align:center'><img src='" + p.avatar + "' width='60'><p>" + p.nickname + "</p></div>";
+      html += "<div style='text-align:center'><img src='avatars/" + p.avatar + "' width='60'><p>" + p.nickname + "</p></div>";
     }
   });
   html += "</div>";
