@@ -2,6 +2,11 @@ const socket = io("https://backend2-941b.onrender.com");
 
 let nickname = "";
 let currentLobbyId = "";
+let mySocketId = "";
+
+socket.on("connect", () => {
+  mySocketId = socket.id;
+});
 
 function continueToLobbyOptions() {
   nickname = document.getElementById("nickname").value;
@@ -40,7 +45,25 @@ socket.on("lobbyJoined", ({ lobby, players }) => {
   document.getElementById("lobbyList").style.display = "none";
   const gameArea = document.getElementById("gameArea");
   gameArea.style.display = "block";
-  gameArea.innerHTML = "<h2>Lobi: " + lobby.name + "</h2><p>Oyuncular:</p><ul>" +
-    players.map(p => "<li>" + p.nickname + "</li>").join("") +
-    "</ul><p>Lobi kodu: " + lobby.id + "</p>";
+
+  let html = "<h2>Lobi: " + lobby.name + "</h2><div style='display:flex; flex-wrap:wrap; gap:10px'>";
+  players.forEach(p => {
+    if (p.empty) {
+      html += "<div style='text-align:center'><img src='Empty.png' width='60'><p>Boş</p></div>";
+    } else {
+      html += "<div style='text-align:center'><img src='" + p.avatar + "' width='60'><p>" + p.nickname + "</p></div>";
+    }
+  });
+  html += "</div>";
+
+  if (mySocketId === lobby.ownerId) {
+    html += "<br><button onclick='startGame()'>Oyunu Başlat</button>";
+  }
+
+  gameArea.innerHTML = html;
 });
+
+function startGame() {
+  if (!currentLobbyId) return;
+  socket.emit("startGame", { lobbyId: currentLobbyId });
+}
