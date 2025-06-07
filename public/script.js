@@ -1,4 +1,4 @@
-const socket = io();
+const socket = io("https://backend2-941b.onrender.com");
 
 let nickname = "";
 let currentLobbyId = "";
