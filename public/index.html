@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hortlaklı Köy</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body>
   <h1>Hortlaklı Köy</h1>
@@ -12,9 +13,90 @@
     <h2 id="phaseTitle"></h2>
     <p id="phaseTimer"></p>
   </div>
-  <script src="/socket.io/socket.io.js"></script>
+
+  <div id="login">
+    <input type="text" id="nickname" placeholder="Nickinizi girin">
+    <button onclick="continueToLobbyOptions()">Devam</button>
+  </div>
+
+  <div id="lobbyOptions" style="display: none">
+    <input type="text" id="lobbyName" placeholder="Lobi adı">
+    <button onclick="createLobby()">Lobi Oluştur</button>
+    <button onclick="showLobbyList()">Lobiler</button>
+  </div>
+
+  <div id="lobbyList" style="display: none"></div>
+  <div id="gameArea" style="display: none"></div>
+
   <script>
-    const socket = io();
+    const socket = io("https://backend2-941b.onrender.com");
+    let nickname = "";
+    let currentLobbyId = "";
+    let mySocketId = "";
+
+    socket.on("connect", () => {
+      mySocketId = socket.id;
+    });
+
+    function continueToLobbyOptions() {
+      nickname = document.getElementById("nickname").value;
+      if (!nickname) return;
+      document.getElementById("login").style.display = "none";
+      document.getElementById("lobbyOptions").style.display = "block";
+    }
+
+    function createLobby() {
+      const lobbyName = document.getElementById("lobbyName").value;
+      if (!lobbyName) return;
+      socket.emit("createLobby", { lobbyName, nickname });
+    }
+
+    function showLobbyList() {
+      socket.emit("getLobbies");
+    }
+
+    socket.on("lobbyList", (lobbies) => {
+      const list = document.getElementById("lobbyList");
+      list.innerHTML = "<h3>Mevcut Lobiler:</h3>";
+      lobbies.forEach((lobby) => {
+        const btn = document.createElement("button");
+        btn.innerText = lobby.name;
+        btn.onclick = () => {
+          socket.emit("joinLobby", { lobbyId: lobby.id, nickname });
+        };
+        list.appendChild(btn);
+      });
+      list.style.display = "block";
+    });
+
+    socket.on("lobbyJoined", ({ lobby, players }) => {
+      currentLobbyId = lobby.id;
+      document.getElementById("lobbyOptions").style.display = "none";
+      document.getElementById("lobbyList").style.display = "none";
+      const gameArea = document.getElementById("gameArea");
+      gameArea.style.display = "block";
+
+      let html = "<h2>Lobi: " + lobby.name + "</h2><div style='display:flex; flex-wrap:wrap; gap:10px'>";
+      players.forEach(p => {
+        if (p.empty) {
+          html += "<div style='text-align:center'><img src='avatars/Empty.png' width='60'><p>Boş</p></div>";
+        } else {
+          html += "<div style='text-align:center'><img src='avatars/" + p.avatar + "' width='60'><p>" + p.nickname + "</p></div>";
+        }
+      });
+      html += "</div>";
+
+      if (mySocketId === lobby.ownerId) {
+        html += "<br><button onclick='startGame()'>Oyunu Başlat</button>";
+      }
+
+      gameArea.innerHTML = html;
+    });
+
+    function startGame() {
+      if (!currentLobbyId) return;
+      socket.emit("startGame", { lobbyId: currentLobbyId });
+    }
 
     socket.on("phaseChange", ({ phase }) => {
       const display = document.getElementById("phaseDisplay");
@@ -29,6 +111,14 @@
         timer.textContent = seconds + " saniye";
         if (seconds <= 0) clearInterval(interval);
       }, 1000);
+    });
+
+    socket.on("killedByGulyabani", () => {
+      alert("Gulyabani tarafından yendin!");
+    });
+
+    socket.on("playerDied", ({ nickname }) => {
+      alert(nickname + " Gulyabani tarafından yendi.");
     });
   </script>
 </body>
