@@ -1,4 +1,4 @@
-const socket = io();
+const socket = io("https://backend2-941b.onrender.com");
 
 let nickname = "";
 let currentLobbyId = "";
@@ -42,5 +42,5 @@ socket.on("lobbyJoined", ({ lobby, players }) => {
   gameArea.style.display = "block";
   gameArea.innerHTML = "<h2>Lobi: " + lobby.name + "</h2><p>Oyuncular:</p><ul>" +
     players.map(p => "<li>" + p.nickname + "</li>").join("") +
-    "</ul>";
+    "</ul><p>Lobi kodu: " + lobby.id + "</p>";
 });
