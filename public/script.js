@@ -13,12 +13,6 @@ function continueToLobbyOptions() {
 }
 
 function createLobby() {
-  socket.on("lobbyJoined", ({ lobby, players }) => {
-  console.log("Lobiye katıldın:", lobby);
-  // Burada oyuncu listesini ve lobby bilgilerini ekrana bastırabilirsin
-  alert(`Lobiye katıldınız: ${lobby.name}`);
-});
-
   const lobbyName = document.getElementById("lobbyName").value;
   if (!lobbyName) {
     alert("Lobi ismi girmelisin!");
@@ -30,3 +24,8 @@ function createLobby() {
     nickname
   });
 }
+ socket.on("lobbyJoined", ({ lobby, players }) => {
+  console.log("Lobiye katıldın:", lobby);
+  // Burada oyuncu listesini ve lobby bilgilerini ekrana bastırabilirsin
+  alert(`Lobiye katıldınız: ${lobby.name}`);
+});
