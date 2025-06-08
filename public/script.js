@@ -1,69 +1,20 @@
-const socket = io("https://backend2-941b.onrender.com");
+const socket = io();
 
-let nickname = "";
-let currentLobbyId = "";
-let mySocketId = "";
-
-socket.on("connect", () => {
-  mySocketId = socket.id;
-});
-
+// Nickname girişinden sonra...
 function continueToLobbyOptions() {
-  nickname = document.getElementById("nickname").value;
-  if (!nickname) return;
-  document.getElementById("login").style.display = "none";
+  document.getElementById("nicknameInput").style.display = "none";
   document.getElementById("lobbyOptions").style.display = "block";
 }
 
-function createLobby() {
-  const lobbyName = document.getElementById("lobbyName").value;
-  if (!lobbyName) return;
-  socket.emit("createLobby", { lobbyName, nickname });
-}
-
-function showLobbyList() {
-  socket.emit("getLobbies");
-}
-
-socket.on("lobbyList", (lobbies) => {
-  const list = document.getElementById("lobbyList");
-  list.innerHTML = "<h3>Mevcut Lobiler:</h3>";
-  lobbies.forEach((lobby) => {
-    const btn = document.createElement("button");
-    btn.innerText = lobby.name;
-    btn.onclick = () => {
-      socket.emit("joinLobby", { lobbyId: lobby.id, nickname });
-    };
-    list.appendChild(btn);
-  });
-  list.style.display = "block";
+// 'yourRole' eventini yakala ve oyuncuya rolünü göster
+socket.on("yourRole", ({ role }) => {
+  const roleDisplay = document.createElement("div");
+  roleDisplay.innerText = `Rolünüz: ${role}`;
+  roleDisplay.style.position = "absolute";
+  roleDisplay.style.top = "10px";
+  roleDisplay.style.right = "10px";
+  roleDisplay.style.backgroundColor = "#fff";
+  roleDisplay.style.padding = "10px";
+  roleDisplay.style.border = "1px solid black";
+  document.body.appendChild(roleDisplay);
 });
-
-socket.on("lobbyJoined", ({ lobby, players }) => {
-  currentLobbyId = lobby.id;
-  document.getElementById("lobbyOptions").style.display = "none";
-  document.getElementById("lobbyList").style.display = "none";
-  const gameArea = document.getElementById("gameArea");
-  gameArea.style.display = "block";
-
-  let html = "<h2>Lobi: " + lobby.name + "</h2><div style='display:flex; flex-wrap:wrap; gap:10px'>";
-  players.forEach(p => {
-    if (p.empty) {
-      html += "<div style='text-align:center'><img src='avatars/Empty.png' width='60'><p>Boş</p></div>";
-    } else {
-      html += "<div style='text-align:center'><img src='avatars/" + p.avatar + "' width='60'><p>" + p.nickname + "</p></div>";
-    }
-  });
-  html += "</div>";
-
-  if (mySocketId === lobby.ownerId) {
-    html += "<br><button onclick='startGame()'>Oyunu Başlat</button>";
-  }
-
-  gameArea.innerHTML = html;
-});
-
-function startGame() {
-  if (!currentLobbyId) return;
-  socket.emit("startGame", { lobbyId: currentLobbyId });
-}
