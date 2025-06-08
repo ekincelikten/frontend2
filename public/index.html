@@ -1,82 +1,19 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>Hortlaklı Köy</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      text-align: center;
-      background-color: #f0f0f0;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-    }
-    .player {
-      display: inline-block;
-      margin: 10px;
-      padding: 10px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .player img {
-      width: 120px;
-      height: auto;
-      border-radius: 8px;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 5px;
-      border: none;
-      border-radius: 6px;
-      background-color: #007BFF;
-      color: white;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    input {
-      padding: 10px;
-      margin: 5px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 1rem;
-    }
-  </style>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script defer src="script.js"></script>
 </head>
 <body>
-  <h1>Hortlaklı Köy</h1>
-  <div id="phaseDisplay" style="display: none; text-align: center;">
-    <h2 id="phaseTitle"></h2>
-    <p id="phaseTimer"></p>
-  </div>
-
   <div id="login">
-    <input type="text" id="nickname" placeholder="Nickinizi girin">
+    <input type="text" id="nickname" placeholder="Takma adınızı girin" />
     <button onclick="continueToLobbyOptions()">Devam</button>
   </div>
-
-  <div id="lobbyOptions" style="display: none">
-    <input type="text" id="lobbyName" placeholder="Lobi adı">
+  <div id="lobbyOptions" style="display:none;">
+    <input type="text" id="lobbyName" placeholder="Lobi ismi" />
     <button onclick="createLobby()">Lobi Oluştur</button>
-    <button onclick="showLobbyList()">Lobiler</button>
-  </div>
-
-  <div id="lobbyList" style="display: none"></div>
-  <div id="gameArea" style="display: none"></div>
-
-  <div id="gameOverDisplay" style="display:none; text-align:center; margin-top:20px;">
-    <h2 id="gameOverMessage"></h2>
   </div>
 </body>
 </html>

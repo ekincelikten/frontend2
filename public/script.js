@@ -1,4 +1,5 @@
 let nickname = "";
+const socket = io("https://hortlakli-koy-backend.onrender.com"); // backend URL'ini buraya gir
 
 function continueToLobbyOptions() {
   const nicknameInput = document.getElementById("nickname").value;
@@ -11,4 +12,15 @@ function continueToLobbyOptions() {
   document.getElementById("lobbyOptions").style.display = "block";
 }
 
-// Diğer tüm socket.io ve oyun etkileşim kodları buraya eklenir...
+function createLobby() {
+  const lobbyName = document.getElementById("lobbyName").value;
+  if (!lobbyName) {
+    alert("Lobi ismi girmelisin!");
+    return;
+  }
+
+  socket.emit("createLobby", {
+    lobbyName,
+    nickname
+  });
+}
