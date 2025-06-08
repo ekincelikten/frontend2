@@ -1,197 +1,133 @@
-let nickname = "";
-const socket = io("https://hortlakli-koy-backend.onrender.com"); // doğru backend adresi
+// server.js güncel - defensePhase eklendi
 
-function continueToLobbyOptions() {
-  const nicknameInput = document.getElementById("nickname").value;
-  if (!nicknameInput) {
-    alert("Lütfen bir nick girin.");
-    return;
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const cors = require("cors");
+
+const app = express();
+app.use(cors());
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
   }
-  nickname = nicknameInput;
-  document.getElementById("login").style.display = "none";
-  document.getElementById("lobbyOptions").style.display = "block";
-}
+});
 
-function createLobby() {
-  const lobbyName = document.getElementById("lobbyName").value;
-  if (!lobbyName) {
-    alert("Lobi ismi girmelisin!");
-    return;
-  }
+let lobbies = {};
 
-  socket.emit("createLobby", {
-    lobbyName,
-    nickname
-  });
-}
-
-function fetchLobbies() {
-  socket.emit("getLobbies");
-}
-
-socket.on("lobbyList", (lobbies) => {
-  const container = document.getElementById("lobbyListContainer");
-  container.innerHTML = "";
-  lobbies.forEach((lobby) => {
-    const card = document.createElement("div");
-    card.className = "lobby-card";
-    card.innerText = lobby.name;
-    card.onclick = () => {
-      socket.emit("joinLobby", {
-        lobbyId: lobby.id,
-        nickname
-      });
+io.on("connection", (socket) => {
+  socket.on("createLobby", ({ nickname, lobbyName }) => {
+    const code = lobbyName;
+    lobbies[code] = {
+      name: code,
+      players: [
+        {
+          id: socket.id,
+          nickname,
+          avatar: `Avatar${Math.floor(Math.random() * 20 + 1)}.png`,
+          role: null,
+          isAlive: true
+        }
+      ],
+      phase: "day"
     };
-    container.appendChild(card);
+    socket.join(code);
+    io.to(socket.id).emit("lobbyJoined", { lobby: lobbies[code], players: lobbies[code].players });
   });
-});
 
-socket.on("lobbyJoined", ({ lobby, players }) => {
-  document.getElementById("lobbyOptions").style.display = "none";
-  document.getElementById("lobbyRoom").style.display = "block";
-  document.getElementById("lobbyTitle").innerText = `Lobi: ${lobby.name}`;
-
-  const playerContainer = document.getElementById("players");
-  playerContainer.innerHTML = "";
-  players.forEach((player, index) => {
-    const img = document.createElement("img");
-    if (player.empty) {
-      img.src = "avatars/Empty.png";
-    } else {
-      img.src = "avatars/" + player.avatar;
-      img.title = player.nickname;
+  socket.on("joinLobby", ({ nickname, lobbyCode }) => {
+    const lobby = lobbies[lobbyCode];
+    if (!lobby) return;
+    if (lobby.players.length >= 20) return;
+    const avatarNumbers = lobby.players.map(p => p.avatar.match(/\d+/)[0]);
+    let avatarNum;
+    for (let i = 1; i <= 20; i++) {
+      if (!avatarNumbers.includes(i.toString())) {
+        avatarNum = i;
+        break;
+      }
     }
-    img.className = "avatar";
-    playerContainer.appendChild(img);
-  });
-});
-
-
-
-let currentLobbyCode = "";
-let myPlayerId = "";
-let myRole = "";
-let selectedTargetId = "";
-
-// Lobiye katılınca bilgileri al
-socket.on("lobbyJoined", ({ lobbyCode, player }) => {
-  currentLobbyCode = lobbyCode;
-  myPlayerId = player.id;
-});
-
-// Oyun başlayınca roller geliyor
-socket.on("roleAssigned", (role) => {
-  myRole = role;
-  console.log("Rolünüz:", role);
-});
-
-// Gündüz fazı başlangıcı
-socket.on("phaseChanged", ({ phase }) => {
-  if (phase === "day") {
-    console.log("Gündüz başladı");
-    enableVoting();
-  } else if (phase === "night") {
-    console.log("Gece başladı");
-  }
-});
-
-// Oylama (avatar tıklamasıyla)
-function enableVoting() {
-  const avatars = document.querySelectorAll(".avatar");
-  avatars.forEach((avatar) => {
-    avatar.onclick = () => {
-      const targetId = avatar.dataset.playerId;
-      if (!targetId || targetId === myPlayerId) return;
-      socket.emit("vote", { lobbyCode: currentLobbyCode, targetId });
+    const player = {
+      id: socket.id,
+      nickname,
+      avatar: avatarNum ? `Avatar${avatarNum}.png` : "Avatar1.png",
+      role: null,
+      isAlive: true
     };
+    lobby.players.push(player);
+    socket.join(lobbyCode);
+    io.to(socket.id).emit("lobbyJoined", { lobby, players: lobby.players });
+    io.to(lobbyCode).emit("playerJoined", lobby.players);
   });
-}
 
-// Savunma fazı başladıysa hedef oyuncuya 10 saniye savunma süresi tanınır
-socket.on("defensePhase", ({ targetId }) => {
-  selectedTargetId = targetId;
-  if (myPlayerId === targetId) {
-    alert("Savunma yapma süren başladı!");
-  }
-  setTimeout(() => {
-    const isGuilty = confirm("Bu oyuncuyu suçlu buluyor musun?");
-    socket.emit("finalVote", {
-      lobbyCode: currentLobbyCode,
-      targetId: selectedTargetId,
-      vote: isGuilty,
-    });
-  }, 10000);
-});
+  socket.on("startGame", ({ lobbyCode }) => {
+    const lobby = lobbies[lobbyCode];
+    if (!lobby) return;
+    const shuffled = [...lobby.players].sort(() => Math.random() - 0.5);
+    shuffled[0].role = "Gulyabani";
+    for (let i = 1; i < shuffled.length; i++) {
+      shuffled[i].role = "Vatandaş";
+    }
+    io.to(lobbyCode).emit("gameStarted", shuffled);
+  });
 
-// Gece Gulyabani seçim ekranı
-socket.on("chooseVictim", (players) => {
-  if (myRole !== "Gulyabani") return;
-  players.forEach((p) => {
-    const avatarEl = document.querySelector(`.avatar[data-player-id='${p.id}']`);
-    if (avatarEl) {
-      avatarEl.onclick = () => {
-        socket.emit("attack", { lobbyCode: currentLobbyCode, targetId: p.id });
-      };
+  socket.on("startNight", ({ lobbyCode }) => {
+    const lobby = lobbies[lobbyCode];
+    if (!lobby) return;
+    const targets = lobby.players.filter(p => p.role !== "Gulyabani" && p.isAlive);
+    io.to(socket.id).emit("chooseVictim", targets);
+  });
+
+  socket.on("attack", ({ lobbyCode, targetId }) => {
+    const lobby = lobbies[lobbyCode];
+    const target = lobby.players.find(p => p.id === targetId);
+    if (!target || !target.isAlive) return;
+    target.isAlive = false;
+    io.to(lobbyCode).emit("playerDied", { playerId: targetId });
+
+    const villagersAlive = lobby.players.filter(p => p.role === "Vatandaş" && p.isAlive);
+    const gulyabaniAlive = lobby.players.filter(p => p.role === "Gulyabani" && p.isAlive);
+    if (villagersAlive.length === 0) {
+      io.to(lobbyCode).emit("gameOver", { winner: "Hortlaklar Kazandı!" });
+    } else if (gulyabaniAlive.length === 0) {
+      io.to(lobbyCode).emit("gameOver", { winner: "Köylüler Kazandı!" });
+    }
+  });
+
+  socket.on("changePhase", ({ lobbyCode, phase }) => {
+    const lobby = lobbies[lobbyCode];
+    if (!lobby) return;
+    lobby.phase = phase;
+    io.to(lobbyCode).emit("phaseChanged", { phase });
+  });
+
+  socket.on("finalVote", ({ lobbyCode, accusedId, vote }) => {
+    const lobby = lobbies[lobbyCode];
+    if (!lobby.finalVotes) lobby.finalVotes = {};
+    if (!lobby.voteCount) lobby.voteCount = 0;
+    if (!lobby.accusedId) lobby.accusedId = accusedId;
+    lobby.finalVotes[socket.id] = vote;
+    lobby.voteCount++;
+    if (lobby.voteCount >= lobby.players.filter(p => p.isAlive).length) {
+      const results = Object.values(lobby.finalVotes);
+      const guiltyCount = results.filter(r => r === "guilty").length;
+      const innocentCount = results.filter(r => r === "innocent").length;
+      const result = guiltyCount > innocentCount ? "guilty" : "innocent";
+      if (result === "guilty") {
+        const target = lobby.players.find(p => p.id === lobby.accusedId);
+        if (target) target.isAlive = false;
+        io.to(lobbyCode).emit("playerDied", { playerId: lobby.accusedId });
+      }
+      io.to(lobbyCode).emit("finalVoteResult", { accusedId: lobby.accusedId, result });
+      delete lobby.finalVotes;
+      delete lobby.voteCount;
+      delete lobby.accusedId;
     }
   });
 });
 
-// Oyuncu öldü: avatarı değiştir
-socket.on("playerDied", ({ avatar }) => {
-  const avatarEl = document.querySelector(`img[src$='${avatar}']`);
-  if (avatarEl) {
-    avatarEl.src = "Dead.png";
-  }
-});
-
-// Öldürüldü ekranı
-socket.on("killed", ({ reason }) => {
-  alert(reason);
-});
-
-// Oyun bitti
-socket.on("gameOver", ({ winner }) => {
-  alert(winner + " kazandı!");
-});
-
-
-
-// Savunma ekranı oyuncu bilgisiyle
-socket.on("defensePhase", ({ targetId, nickname, avatar }) => {
-  selectedTargetId = targetId;
-
-  const container = document.getElementById("defenseInfo");
-  if (container) {
-    container.innerHTML = `
-      <h2>Şüpheli Oyuncu: ${nickname}</h2>
-      <img src="/avatars/${avatar}" alt="avatar" style="width:150px;border:3px solid red;border-radius:20px">
-      <p>10 saniye içinde savunmasını yapıyor...</p>
-    `;
-    container.style.display = "block";
-  }
-
-  setTimeout(() => {
-    if (!finalVoted) {
-      const isGuilty = confirm(`${nickname} suçlu mu?`);
-      socket.emit("finalVote", {
-        lobbyCode: currentLobbyCode,
-        targetId: selectedTargetId,
-        vote: isGuilty,
-      });
-      finalVoted = true;
-    }
-    if (container) container.style.display = "none";
-  }, 10000);
-});
-
-// Oyuncu sadece bir kez final oyu verebilir
-let finalVoted = false;
-
-// Oyun sonu bildirimi
-socket.on("gameOver", ({ winner }) => {
-  alert(winner + " oyunu kazandı!");
-  const banner = document.createElement("div");
-  banner.innerText = winner + " KAZANDI!";
-  banner.style = "position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:3em;background:white;padding:20px;border:4px solid black;";
-  document.body.appendChild(banner);
+server.listen(process.env.PORT || 3000, () => {
+  console.log("Sunucu çalışıyor");
 });
