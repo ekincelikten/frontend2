@@ -65,3 +65,133 @@ socket.on("lobbyJoined", ({ lobby, players }) => {
     playerContainer.appendChild(img);
   });
 });
+
+
+
+let currentLobbyCode = "";
+let myPlayerId = "";
+let myRole = "";
+let selectedTargetId = "";
+
+// Lobiye katılınca bilgileri al
+socket.on("lobbyJoined", ({ lobbyCode, player }) => {
+  currentLobbyCode = lobbyCode;
+  myPlayerId = player.id;
+});
+
+// Oyun başlayınca roller geliyor
+socket.on("roleAssigned", (role) => {
+  myRole = role;
+  console.log("Rolünüz:", role);
+});
+
+// Gündüz fazı başlangıcı
+socket.on("phaseChanged", ({ phase }) => {
+  if (phase === "day") {
+    console.log("Gündüz başladı");
+    enableVoting();
+  } else if (phase === "night") {
+    console.log("Gece başladı");
+  }
+});
+
+// Oylama (avatar tıklamasıyla)
+function enableVoting() {
+  const avatars = document.querySelectorAll(".avatar");
+  avatars.forEach((avatar) => {
+    avatar.onclick = () => {
+      const targetId = avatar.dataset.playerId;
+      if (!targetId || targetId === myPlayerId) return;
+      socket.emit("vote", { lobbyCode: currentLobbyCode, targetId });
+    };
+  });
+}
+
+// Savunma fazı başladıysa hedef oyuncuya 10 saniye savunma süresi tanınır
+socket.on("defensePhase", ({ targetId }) => {
+  selectedTargetId = targetId;
+  if (myPlayerId === targetId) {
+    alert("Savunma yapma süren başladı!");
+  }
+  setTimeout(() => {
+    const isGuilty = confirm("Bu oyuncuyu suçlu buluyor musun?");
+    socket.emit("finalVote", {
+      lobbyCode: currentLobbyCode,
+      targetId: selectedTargetId,
+      vote: isGuilty,
+    });
+  }, 10000);
+});
+
+// Gece Gulyabani seçim ekranı
+socket.on("chooseVictim", (players) => {
+  if (myRole !== "Gulyabani") return;
+  players.forEach((p) => {
+    const avatarEl = document.querySelector(`.avatar[data-player-id='${p.id}']`);
+    if (avatarEl) {
+      avatarEl.onclick = () => {
+        socket.emit("attack", { lobbyCode: currentLobbyCode, targetId: p.id });
+      };
+    }
+  });
+});
+
+// Oyuncu öldü: avatarı değiştir
+socket.on("playerDied", ({ avatar }) => {
+  const avatarEl = document.querySelector(`img[src$='${avatar}']`);
+  if (avatarEl) {
+    avatarEl.src = "Dead.png";
+  }
+});
+
+// Öldürüldü ekranı
+socket.on("killed", ({ reason }) => {
+  alert(reason);
+});
+
+// Oyun bitti
+socket.on("gameOver", ({ winner }) => {
+  alert(winner + " kazandı!");
+});
+
+
+
+// Savunma ekranı oyuncu bilgisiyle
+socket.on("defensePhase", ({ targetId, nickname, avatar }) => {
+  selectedTargetId = targetId;
+
+  const container = document.getElementById("defenseInfo");
+  if (container) {
+    container.innerHTML = `
+      <h2>Şüpheli Oyuncu: ${nickname}</h2>
+      <img src="/avatars/${avatar}" alt="avatar" style="width:150px;border:3px solid red;border-radius:20px">
+      <p>10 saniye içinde savunmasını yapıyor...</p>
+    `;
+    container.style.display = "block";
+  }
+
+  setTimeout(() => {
+    if (!finalVoted) {
+      const isGuilty = confirm(`${nickname} suçlu mu?`);
+      socket.emit("finalVote", {
+        lobbyCode: currentLobbyCode,
+        targetId: selectedTargetId,
+        vote: isGuilty,
+      });
+      finalVoted = true;
+    }
+    if (container) container.style.display = "none";
+  }, 10000);
+});
+
+// Oyuncu sadece bir kez final oyu verebilir
+let finalVoted = false;
+
+// Oyun sonu bildirimi
+socket.on("gameOver", ({ winner }) => {
+  alert(winner + " oyunu kazandı!");
+  const banner = document.createElement("div");
+  banner.innerText = winner + " KAZANDI!";
+  banner.style = "position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:3em;background:white;padding:20px;border:4px solid black;";
+  document.body.appendChild(banner);
+});

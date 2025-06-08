@@ -1,70 +1,32 @@
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Hortlaklı Köy</title>
   <style>
-    body {
-      font-family: sans-serif;
-      background-color: #fefefe;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      margin-top: 60px;
-    }
-    input, button {
-      padding: 12px;
-      margin: 10px;
-      font-size: 1em;
-    }
-    .avatar {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      margin: 10px;
-      border-radius: 20px;
-    }
-    #lobbyListContainer {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 20px;
-    }
-    .lobby-card {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin: 10px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
+    body { font-family: sans-serif; text-align: center; background: #f8f8f8; }
+    .avatar { width: 100px; margin: 10px; cursor: pointer; border-radius: 12px; }
+    #defenseInfo { display: none; padding: 20px; border: 2px solid red; background: #fff; margin: 20px auto; width: 50%; }
   </style>
-  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-  <script defer src="script.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>Hortlaklı Köy</h1>
+  <h1>Hortlaklı Köy</h1>
 
-    <div id="login">
-      <input type="text" id="nickname" placeholder="Takma adınızı girin" />
-      <br />
-      <button onclick="continueToLobbyOptions()">Devam</button>
-    </div>
-
-    <div id="lobbyOptions" style="display:none;">
-      <input type="text" id="lobbyName" placeholder="Lobi İsmi" />
-      <br />
-      <button onclick="createLobby()">Lobi Oluştur</button>
-      <button onclick="fetchLobbies()">Lobiler</button>
-      <div id="lobbyListContainer"></div>
-    </div>
-
-    <div id="lobbyRoom" style="display:none;">
-      <h2 id="lobbyTitle"></h2>
-      <div id="players"></div>
-    </div>
+  <div id="login">
+    <input type="text" id="nickname" placeholder="Takma ad">
+    <button onclick="continueToLobbyOptions()">Devam</button>
   </div>
+
+  <div id="lobbyOptions" style="display:none;">
+    <input type="text" id="lobbyName" placeholder="Lobi adı">
+    <button onclick="createLobby()">Lobi Oluştur</button>
+    <div id="lobbyListContainer"></div>
+  </div>
+
+  <div id="defenseInfo"></div>
+
+  <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
