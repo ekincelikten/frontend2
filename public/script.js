@@ -1,5 +1,5 @@
 let nickname = "";
-const socket = io("https://hortlakli-koy-backend.onrender.com"); // backend URL'ini buraya gir
+const socket = io("https://hortlakli-koy-backend.onrender.com");
 
 function continueToLobbyOptions() {
   const nicknameInput = document.getElementById("nickname").value;

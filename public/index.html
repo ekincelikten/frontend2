@@ -1,19 +1,39 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Hortlaklı Köy</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+    }
+    .container {
+      margin-top: 100px;
+    }
+    input, button {
+      font-size: 1.2em;
+      padding: 10px;
+      margin: 10px;
+    }
+  </style>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script defer src="script.js"></script>
 </head>
 <body>
-  <div id="login">
-    <input type="text" id="nickname" placeholder="Takma adınızı girin" />
-    <button onclick="continueToLobbyOptions()">Devam</button>
-  </div>
-  <div id="lobbyOptions" style="display:none;">
-    <input type="text" id="lobbyName" placeholder="Lobi ismi" />
-    <button onclick="createLobby()">Lobi Oluştur</button>
+  <div class="container">
+    <h1>Hortlaklı Köy</h1>
+    <div id="login">
+      <input type="text" id="nickname" placeholder="Takma adınızı girin" />
+      <br />
+      <button onclick="continueToLobbyOptions()">Devam</button>
+    </div>
+    <div id="lobbyOptions" style="display:none;">
+      <input type="text" id="lobbyName" placeholder="Lobi İsmi" />
+      <br />
+      <button onclick="createLobby()">Lobi Oluştur</button>
+    </div>
   </div>
 </body>
 </html>
