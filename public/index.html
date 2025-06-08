@@ -1,11 +1,58 @@
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hortlaklı Köy</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .player {
+      display: inline-block;
+      margin: 10px;
+      padding: 10px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .player img {
+      width: 120px;
+      height: auto;
+      border-radius: 8px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+      background-color: #007BFF;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    input {
+      padding: 10px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+  </style>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script defer src="script.js"></script>
 </head>
 <body>
   <h1>Hortlaklı Köy</h1>
@@ -28,98 +75,8 @@
   <div id="lobbyList" style="display: none"></div>
   <div id="gameArea" style="display: none"></div>
 
-  <script>
-    const socket = io("https://backend2-941b.onrender.com");
-    let nickname = "";
-    let currentLobbyId = "";
-    let mySocketId = "";
-
-    socket.on("connect", () => {
-      mySocketId = socket.id;
-    });
-
-    function continueToLobbyOptions() {
-      nickname = document.getElementById("nickname").value;
-      if (!nickname) return;
-      document.getElementById("login").style.display = "none";
-      document.getElementById("lobbyOptions").style.display = "block";
-    }
-
-    function createLobby() {
-      const lobbyName = document.getElementById("lobbyName").value;
-      if (!lobbyName) return;
-      socket.emit("createLobby", { lobbyName, nickname });
-    }
-
-    function showLobbyList() {
-      socket.emit("getLobbies");
-    }
-
-    socket.on("lobbyList", (lobbies) => {
-      const list = document.getElementById("lobbyList");
-      list.innerHTML = "<h3>Mevcut Lobiler:</h3>";
-      lobbies.forEach((lobby) => {
-        const btn = document.createElement("button");
-        btn.innerText = lobby.name;
-        btn.onclick = () => {
-          socket.emit("joinLobby", { lobbyId: lobby.id, nickname });
-        };
-        list.appendChild(btn);
-      });
-      list.style.display = "block";
-    });
-
-    socket.on("lobbyJoined", ({ lobby, players }) => {
-      currentLobbyId = lobby.id;
-      document.getElementById("lobbyOptions").style.display = "none";
-      document.getElementById("lobbyList").style.display = "none";
-      const gameArea = document.getElementById("gameArea");
-      gameArea.style.display = "block";
-
-      let html = "<h2>Lobi: " + lobby.name + "</h2><div style='display:flex; flex-wrap:wrap; gap:10px'>";
-      players.forEach(p => {
-        if (p.empty) {
-          html += "<div style='text-align:center'><img src='avatars/Empty.png' width='60'><p>Boş</p></div>";
-        } else {
-          html += "<div style='text-align:center'><img src='avatars/" + p.avatar + "' width='60'><p>" + p.nickname + "</p></div>";
-        }
-      });
-      html += "</div>";
-
-      if (mySocketId === lobby.ownerId) {
-        html += "<br><button onclick='startGame()'>Oyunu Başlat</button>";
-      }
-
-      gameArea.innerHTML = html;
-    });
-
-    function startGame() {
-      if (!currentLobbyId) return;
-      socket.emit("startGame", { lobbyId: currentLobbyId });
-    }
-
-    socket.on("phaseChange", ({ phase }) => {
-      const display = document.getElementById("phaseDisplay");
-      const title = document.getElementById("phaseTitle");
-      const timer = document.getElementById("phaseTimer");
-      let seconds = phase === "day" ? 15 : 10;
-      title.textContent = phase === "day" ? "GÜNDÜZ" : "GECE";
-      display.style.display = "block";
-      timer.textContent = seconds + " saniye";
-      const interval = setInterval(() => {
-        seconds--;
-        timer.textContent = seconds + " saniye";
-        if (seconds <= 0) clearInterval(interval);
-      }, 1000);
-    });
-
-    socket.on("killedByGulyabani", () => {
-      alert("Gulyabani tarafından yendin!");
-    });
-
-    socket.on("playerDied", ({ nickname }) => {
-      alert(nickname + " Gulyabani tarafından yendi.");
-    });
-  </script>
+  <div id="gameOverDisplay" style="display:none; text-align:center; margin-top:20px;">
+    <h2 id="gameOverMessage"></h2>
+  </div>
 </body>
 </html>
