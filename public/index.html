@@ -6,16 +6,38 @@
   <style>
     body {
       font-family: sans-serif;
+      background-color: #fefefe;
       text-align: center;
-      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
     }
     .container {
-      margin-top: 100px;
+      margin-top: 60px;
     }
     input, button {
-      font-size: 1.2em;
+      padding: 12px;
+      margin: 10px;
+      font-size: 1em;
+    }
+    .avatar {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      margin: 10px;
+      border-radius: 20px;
+    }
+    #lobbyListContainer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .lobby-card {
+      border: 1px solid #ccc;
       padding: 10px;
       margin: 10px;
+      border-radius: 8px;
+      cursor: pointer;
     }
   </style>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -24,15 +46,24 @@
 <body>
   <div class="container">
     <h1>Hortlaklı Köy</h1>
+
     <div id="login">
       <input type="text" id="nickname" placeholder="Takma adınızı girin" />
       <br />
       <button onclick="continueToLobbyOptions()">Devam</button>
     </div>
+
     <div id="lobbyOptions" style="display:none;">
       <input type="text" id="lobbyName" placeholder="Lobi İsmi" />
       <br />
       <button onclick="createLobby()">Lobi Oluştur</button>
+      <button onclick="fetchLobbies()">Lobiler</button>
+      <div id="lobbyListContainer"></div>
+    </div>
+
+    <div id="lobbyRoom" style="display:none;">
+      <h2 id="lobbyTitle"></h2>
+      <div id="players"></div>
     </div>
   </div>
 </body>

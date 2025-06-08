@@ -24,8 +24,44 @@ function createLobby() {
     nickname
   });
 }
- socket.on("lobbyJoined", ({ lobby, players }) => {
-  console.log("Lobiye katıldın:", lobby);
-  // Burada oyuncu listesini ve lobby bilgilerini ekrana bastırabilirsin
-  alert(`Lobiye katıldınız: ${lobby.name}`);
+
+function fetchLobbies() {
+  socket.emit("getLobbies");
+}
+
+socket.on("lobbyList", (lobbies) => {
+  const container = document.getElementById("lobbyListContainer");
+  container.innerHTML = "";
+  lobbies.forEach((lobby) => {
+    const card = document.createElement("div");
+    card.className = "lobby-card";
+    card.innerText = lobby.name;
+    card.onclick = () => {
+      socket.emit("joinLobby", {
+        lobbyId: lobby.id,
+        nickname
+      });
+    };
+    container.appendChild(card);
+  });
+});
+
+socket.on("lobbyJoined", ({ lobby, players }) => {
+  document.getElementById("lobbyOptions").style.display = "none";
+  document.getElementById("lobbyRoom").style.display = "block";
+  document.getElementById("lobbyTitle").innerText = `Lobi: ${lobby.name}`;
+
+  const playerContainer = document.getElementById("players");
+  playerContainer.innerHTML = "";
+  players.forEach((player, index) => {
+    const img = document.createElement("img");
+    if (player.empty) {
+      img.src = "avatars/Empty.png";
+    } else {
+      img.src = "avatars/" + player.avatar;
+      img.title = player.nickname;
+    }
+    img.className = "avatar";
+    playerContainer.appendChild(img);
+  });
 });
